@@ -10,7 +10,7 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
         //Setup
-        final GameConfiguration gameConfig = new GameConfiguration(7,2,100,2);
+        final GameConfiguration gameConfig = new GameConfiguration(7,2,100,2000000);
 
         int threads = Runtime.getRuntime().availableProcessors();
 
@@ -25,17 +25,14 @@ public class Main {
         final DecimalFormat format = new DecimalFormat("###,###");
 
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    long runsL = runs.get();
-                    long runsDone = staticRuns - runsL;
-                    double percent = (runsDone * 100.0) / staticRuns;
-                    System.out.println("Progress: " + format.format(percent) + "%");
-                    if(runsL <= 0)
-                        break;
-                }
+        new Thread(() -> {
+            while (true) {
+                long runsL = runs.get();
+                long runsDone = staticRuns - runsL;
+                double percent = (runsDone * 100.0) / staticRuns;
+                System.out.println("Progress: " + format.format(percent) + "%");
+                if(runsL <= 0)
+                    break;
             }
         }).start();
 
@@ -50,7 +47,7 @@ public class Main {
                             break;
                     }
 
-                    results.add(runSimulation(gameConfig.neededBalance,gameConfig.goal));
+                    results.add(runSimulation(gameConfig.neededBalance,gameConfig.goal, gameConfig.startingBet));
                 }
 
                 GameResult endGameResult = new GameResult(results.stream().mapToInt(GameResult::wins).sum(),
@@ -85,8 +82,7 @@ public class Main {
 
     }
 
-    private static GameResult runSimulation(int balance,int goal) {
-        int bet = 2;
+    private static GameResult runSimulation(int balance,int goal, int bet) {
         int wins = 0;
         int looses = 0;
         int games = 0;
@@ -126,8 +122,10 @@ class GameConfiguration {
     final int goal;
     final int neededBalance;
     final int runs;
+    final int startingBet;
 
     public GameConfiguration(int tries,int startingBet, int goal, int runs) {
+        this.startingBet = startingBet;
         this.neededBalance = getNeededBalanceFromTries(tries, startingBet);
         this.goal = neededBalance+goal;
         this.runs = runs;
